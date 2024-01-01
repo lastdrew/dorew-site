@@ -1,0 +1,9 @@
+{
+    "require": {
+        "twig/twig": "^3.0",
+        "rakibtg/sleekdb": "^2.15",
+        "twig/string-extra": "^3.8",
+        "twig/extra-bundle": "^3.8",
+        "erusev/parsedown": "^1.7"
+    }
+}

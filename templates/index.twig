@@ -1,0 +1,158 @@
+{% use '_blocks/layout.twig' %}
+{{block('header')}}
+
+{% if not get_cookie('guest') %}
+{% do set_cookie('guest', random(['chồn xanh','gấu trúc','mèo lười','siêu nhân','thần bịp'])~'+'~'now'|date('Ymh')) %}
+{{redirect('/')}}
+{% endif %}
+
+{% set key = 'chat' %}
+{% if get_get('delete_data_by_key')|lower == key %}
+{% do delete_data_by_key(key) %}
+{{redirect('/')}}
+{% endif %}
+
+{% set name = get_cookie('guest') %}
+{% if request_method()|lower == 'post' %}
+{% if get_post('content')|length > 10 %}
+{% do save_data(key, {'name':name, 'content':get_post('content'), 'time':'now'|date('U')}) %}
+{{redirect('/')}}
+{% else %}
+{% set error = 'Lỗi rồi. Nội dung đâu?' %}
+{% endif %}
+{% endif %}
+
+{#
+{{update_data_by_id(key, 1, {
+    'content': 'Chào mừng các bạn đến với DorewSite phiên bản kỷ niệm dành cho Wap4.co! Shoutbox này là một ví dụ để trình bày cách thực thao tác với dữ liệu, và dưới đây là một số câu lệnh cơ bản:'
+})}}
+#}
+
+<div class="phdr">Trò chuyện</div>
+{% if error %}<div class="postItem">{{error}}</div>{% endif %}
+<div class="postItem">
+<a href="?delete_data_by_key={{key}}"><button type="button">{{'delete_data_by_key(key)'|raw}}</button></a><br/>
+{{'{% set key = "chat" %}'|raw}}<br/>
+{{'{% set name = "'~get_cookie('guest')~'" %}'|raw}}
+<form method="post" action="">
+{{'{% set content %}'|raw}}
+<div style="text-align:center">
+<textarea rows="5" name="content" placeholder="nhập nội dung vào đây"></textarea>
+</div>
+{{'{% endset %}'|raw}}
+<br/>
+<button type="submit">save_data(key, {'name': name, 'content': get_post('content'), 'time':{{'now'|date('U')}}})</button>
+</form>
+</div>
+<div class="phdr">Danh sách chat ({{get_data_count(key)}})</div>
+<div class="postItem">
+<b>BOT:</b>
+{% set code = "<div class='phdr'>Danh sách chat ({{get_data_count(key)}})</div>
+{% if get_data_count(key) > 0 %}
+{% set data = get_data('chat')|slice(10) %}
+{% for item in data %}
+<div class='postItem'><b>{{item.name}}:</b> {{item.content}} <i>({{_self.ago(item.time)}})</div>
+{% endfor %}
+{% endif %}" %}
+{% set md %}
+```twig
+{{code|raw}}
+```
+{% endset %}
+{{markdown(md)|raw}}
+</div>
+{% set totalcmt = get_data_count(key) %}
+{% if totalcmt > 0 %}
+{% set per_cmt = '10' %}
+{% set page_max_cmt = totalcmt//per_cmt %}
+{% if totalcmt//per_cmt != totalcmt/per_cmt %}
+  {% set page_max_cmt = totalcmt//per_cmt+1 %}
+{% endif %}
+{% set p_cmt = get_get('page') %}
+{% if p_cmt matches '/[a-zA-z]|%/' or p_cmt<1 %}
+  {% set p_cmt = 1 %}
+{% endif %}
+{% if p_cmt > page_max_cmt %}
+  {% set p_cmt = page_max_cmt %}
+{% endif %}
+{% set st_cmt = p_cmt*per_cmt-per_cmt %}
+{% set data = get_data('chat')|slice(st_cmt, per_cmt) %}
+{% for item in data %}
+<div class='postItem'><b>{{item.name}}:</b> {{markdown(item.content|default('hello'))|raw}} <i>({{_self.ago(item.time)}})</i></div>
+{% endfor %}
+{% if totalcmt > per_cmt %}{{_self.paging('?loadCmt=',p_cmt,page_max_cmt)}}{% endif %}
+{% endif %}
+
+{{block('footer')}}
+
+{% macro ago(time_ago) %}
+{% apply spaceless %}
+{% set now = 'now'|date('U')-1160 %}
+{% set time_ago = time_ago|date('U')-1160 %}
+{% set timeht=now|date('U', 'Asia/Ho_Chi_Minh') %}
+{% set time = time_ago|date('U', 'Asia/Ho_Chi_Minh') %}
+{% set time_giay = timeht - time %}
+{% set time_phut = (time_giay / 60 )|round(0,'floor') %}
+{% set time_day = timeht|date('z', 'Asia/Ho_Chi_Minh')-time|date('z', 'Asia/Ho_Chi_Minh') %}
+{% set fulltime = time_ago|date('d.m.Y - H:i', 'Asia/Ho_Chi_Minh') %}
+{% set minitime = time_ago|date('H:i', 'Asia/Ho_Chi_Minh') %}
+{% if time_day == 0 %}
+{% if time_giay <= 60 %}
+{{time_giay}} giây trước
+{% elseif time_phut <= 60 %}
+{{time_phut}} phút trước
+{% else %}
+Hôm nay, {{minitime}}
+{% endif %}
+{% elseif time_day == 1 %}
+Hôm qua, {{minitime}}
+{% else %}
+{{fulltime}}
+{% endif %}
+{% endapply %}
+{% endmacro %}
+
+{% macro paging(trang,p,max,b) %}
+{% apply spaceless %}
+  {% if max > 1 %}
+    <center>
+      <div class="pagination topmenu">
+      {% set a='<a class="pagenav" href="/'~trang~'' %}
+      {% if p>max %}{% set p=max %}a{% endif %}
+      {% if p>1 %}
+      	{{a|raw}}{{p-1}}{{b}}">«</a>
+      {% endif %}
+      {% if p>3 %}
+      	{{a|raw}}1{{b}}">1</a>
+      {% endif %}
+      {% if p>4 %}
+      	<span>...</span>
+      {% endif %}
+      {% if p>2 %}
+      	{{a|raw}}{{p-2}}{{b}}">{{p-2}}</a>
+      {% endif %}
+      {% if p>1 %}
+      	{{a|raw}}{{p-1}}{{b}}">{{p-1}}</a>
+      {% endif %}
+      <span class="current"><b>{{p}}</b></span>
+      {% if p<max-1 %}
+      	{{a|raw}}{{p+1}}{{b}}">{{p+1}}</a>
+      {% endif %}
+      {% if p<max-2 %}
+      	{{a|raw}}{{p+2}}{{b}}">{{p+2}}</a>
+      {% endif %}
+      {% if p<max-3 %}
+      	<span>...</span>
+      {% endif %}
+      {% if p<max %}
+      	{{a|raw}}{{max}}{{b}}" class="next">{{max}}</a>
+      {% endif %}
+      {% if p<max %}
+      	{{a|raw}}{{p+1}}{{b}}">»</a>
+      {% endif %}
+
+      </div>
+    </center>
+  {% endif %}
+{% endapply %}
+{% endmacro %}
