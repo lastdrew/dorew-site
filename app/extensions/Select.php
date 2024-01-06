@@ -17,6 +17,7 @@ class SelectExtension extends Extension implements ExtensionInterface
             new TwigFunction('get_data_count', [$this, 'get_data_count']),
             new TwigFunction('get_data_by_id', [$this, 'get_data_by_id']),
             new TwigFunction('RealEscape', [$this, 'RealEscape']),
+            new TwigFunction('store', [$this, 'QueryBuilder']),
         ];
     }
     public function getFilters()
@@ -46,6 +47,18 @@ class SelectExtension extends Extension implements ExtensionInterface
         $string = trim($string);
         $string = htmlspecialchars($string);
         return (strlen($string) > 1) ? $string : null;
+    }
+
+    public function QueryBuilder($key = null)
+    {
+        if (!$key) {
+            return false;
+        } else {
+            if ($this->get_data_count($key) > 0) {
+                $store =  new \SleekDB\Store($key, JsonDB);
+                return $store->createQueryBuilder();
+            }
+        }
     }
 
     public function check_data($key = null, $id = null)

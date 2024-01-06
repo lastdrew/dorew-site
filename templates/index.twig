@@ -1,6 +1,8 @@
 {% use '_blocks/layout.twig' %}
 {{block('header')}}
 
+{{print_r(store('chat').getQuery().fetch())}}
+
 {% if not get_cookie('guest') %}
 {% do set_cookie('guest', random(['chồn xanh','gấu trúc','mèo lười','siêu nhân','thần bịp'])~'+'~'now'|date('Ymh')) %}
 {{redirect('/')}}
@@ -76,7 +78,7 @@
   {% set p_cmt = page_max_cmt %}
 {% endif %}
 {% set st_cmt = p_cmt*per_cmt-per_cmt %}
-{% set data = get_data('chat')|slice(st_cmt, per_cmt) %}
+{% set data = store('chat').getQuery().fetch()|slice(st_cmt, per_cmt) %}
 {% for item in data %}
 <div class='postItem'><b>{{item.name}}:</b> {{markdown(item.content|default('hello'))|raw}} <i>({{_self.ago(item.time)}})</i></div>
 {% endfor %}

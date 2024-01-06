@@ -26,7 +26,7 @@ ini_set('session.use_trans_sid', '0');
 ini_set('arg_separator.output', '&amp;');
 mb_internal_encoding('UTF-8');
 
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 ini_set('display_startup_errors', 1);
 error_reporting(-1);
 
