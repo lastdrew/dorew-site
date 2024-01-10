@@ -115,7 +115,7 @@ class SelectExtension extends Extension implements ExtensionInterface
     {
         if (!$key || !$id) return 'There is not key or id in get_data_by_id()';
         $store = SleekDB::store($key, JsonDB);
-        $data = $store->findOneBy(['_id' => $id]);
+        $data = $store->findOneBy(['_id', '=', $id]);
         return $data;
     }
 }
