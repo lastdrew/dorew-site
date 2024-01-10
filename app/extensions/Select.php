@@ -71,21 +71,35 @@ class SelectExtension extends Extension implements ExtensionInterface
         return true;
     }
 
-    public function get_data($key = null, $per_page = 10, $page = 1, $order = null)
+    public function get_data($key = null, $per_page = null, $page = null, $order = null)
     {
         /**
          * $key - the store
          */
-        if ($page != 0) {
-            $page = $page - 1;
-        }
         if (!$key) return 'There is not key in get_data()';
-        if (!$order) $order = 'time';
-        $store = SleekDB::store($key, JsonDB);
-        $find = $store->findAll();
-        $start = $page * $per_page;
-        $data_slice = array_slice($find, $start, $per_page);
-        return $data_slice;
+        $query = $this->QueryBuilder($key);
+        if (!$per_page && !$page && !$order) {
+            $data = $query->orderBy(['_id' => 'desc'])->getQuery()->fetch();
+        } else {
+            if ($page != 0) {
+                $page = $page - 1;
+            }
+            if (!$order) $order = 'time';
+            if ($order == 'id') $order = '_id';
+            if (!is_array($order)) $order = [$order => 'desc'];
+            $total = $this->get_data_count($key);
+            $page_max = ceil($total / $per_page);
+            if ($page >= $page_max) $page = $page_max;
+            if ($page < 1) $page = 1;
+            $start = ($page - 1) * $per_page;
+            $start = $start > 0 ? $start : 1;
+            if ($total < $per_page) {
+                $data = $query->limit($per_page)->orderBy($order)->getQuery()->fetch();
+            } else {
+                $data = $query->limit($per_page)->skip($start)->orderBy($order)->getQuery()->fetch();
+            }
+        }
+        return $data;
     }
 
     public function get_data_count($key = null)
